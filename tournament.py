@@ -4,11 +4,14 @@
 #
 
 import psycopg2
+import os
+psqlUser = os.environ['UDACITY_TOURNAMENT_PSQL_USER']
+psqlPass = os.environ['UDACITY_TOURNAMENT_PSQL_PASS']
 
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    return psycopg2.connect(database='tournament',user=psqlUser,password=psqlPass)
 
 
 def deleteMatches():
