@@ -37,6 +37,8 @@ tournament_names = [
                     'Tick Tack Toe for Granny\'s'
                     ]
 
+currentTournament = None
+
 # HELPER FUNCTIONS - SO I DON'T NEED TO WRITE ALL x TIMES
 def helperDelete():
     deleteTournaments()
@@ -46,15 +48,24 @@ def helperDelete():
 # improved the registration by taking up a given number of players.
 # if not provided one player will be registered.
 # player names are shuffled randomly from lists.
-def helperRegisterPlayer(intPlayers=1):
+def helperAddPlayer(intPlayers=1):
+    lst_players = []
     for x in range(0,intPlayers):
-        registerPlayer(\
-            first_names[randint(0,len(first_names))]+' '+\
-            last_names[randint(0,len(last_names))])
+        lst_players.append(
+                addPlayer(
+                    first_names[randint(0,len(first_names))]+' '+\
+                    last_names[randint(0,len(last_names))])
+            )
+    for x in lst_players:
+        helperRegisterPlayer(participant,currentTournament)
+
+
+def helperRegisterPlayer(participant,tournament):
+    registerPlayer(participant,tournament)
 
 # registrates one Tournament so matches and players can be registered to it.
 def helperRegisterTournament():
-    registerTournament(tournament_names[randint(0,len(tournament_names))])
+    currentTournament = registerTournament(tournament_names[randint(0,len(tournament_names))])
 
 # SINGLE DELETE TESTS
 
@@ -86,7 +97,7 @@ def testCount():
 def testRegister():
     helperDelete()
     helperRegisterTournament()
-    helperRegisterPlayer(1)
+    helperAddPlayer(1)
     c = countPlayers()
     if c != 1:
         raise ValueError(
@@ -113,7 +124,7 @@ def testRegisterCountDelete():
     helperDelete()
     helperRegisterTournament()
     # register 4 players with random names
-    helperRegisterPlayer(4)
+    helperAddPlayer(4)
 
     c = countPlayers()
     if c != 4:
@@ -129,7 +140,7 @@ def testRegisterCountDelete():
 def testStandingsBeforeMatches():
     helperDelete()
     helperRegisterTournament()
-    helperRegisterPlayer(2)
+    helperAddPlayer(2)
     standings = playerStandings()
     if len(standings) < 2:
         raise ValueError("Players should appear in playerStandings even before "
@@ -152,7 +163,7 @@ def testStandingsBeforeMatches():
 
 # ORIGINAL
 # def testReportMatches():
-#     helperRegisterPlayer(4)
+#     helperAddPlayer(4)
 #     standings = playerStandings()
 #     [id1, id2, id3, id4] = [row[0] for row in standings]
 #     reportMatch(id1, id2)
@@ -173,7 +184,7 @@ def testReportMatches():
 def testPairings():
     helperDelete()
     helperRegisterTournament()
-    helperRegisterPlayer(4)
+    helperAddPlayer(4)
     standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
     reportMatch(id1, id2)

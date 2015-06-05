@@ -43,13 +43,13 @@ DROP TABLE IF EXISTS participants CASCADE;
 
 CREATE TABLE participants (
 	id SERIAL PRIMARY KEY,
-	name text,
+	name text
 );
 
 DROP TABLE IF EXISTS registered CASCADE;
 
 CREATE TABLE registered(
-	tournamentid INTEGER REFERENCES tournaments ON DELETE CASCADE,
+	tournament INTEGER REFERENCES tournaments ON DELETE CASCADE,
 	participant INTEGER REFERENCES participants ON DELETE CASCADE
 );
 

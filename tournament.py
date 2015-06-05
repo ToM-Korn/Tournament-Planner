@@ -12,19 +12,19 @@ class DB():
         psqlUser = os.environ['UDACITY_TOURNAMENT_PSQL_USER']
         psqlPass = os.environ['UDACITY_TOURNAMENT_PSQL_PASS']
 
-        self.con = self.connect()
-        self.c = c = conn.cursor()
+        self.con = self.connectDB()
+        self.c = self.con.cursor()
         self.current_round = None
         self.tournament = None
 
-# #DATABASE AND TABLES#
-    def connect():
+    # #DATABASE AND TABLES#
+    def connectDB(self):
         """Connect to the PostgreSQL database.  Returns a database connection."""
         return psycopg2.connect(database='tournament',\
                                 user=psqlUser,\
                                 password=psqlPass)
 
-    def createTables(conn):
+    def createTables(self):
         """Reads the sql file and creates the Tables accordingly to in.
 
         Args:
@@ -34,45 +34,61 @@ class DB():
         self.c.execute(shema)
         self.con.commit()
 
-# #TOURNAMENTS#
-    def deleteTournaments():
+    # #TOURNAMENTS#
+    def deleteTournaments(self):
         '''Removes all the tournaments from the database.'''
         self.c.execute("DELETE FROM tournaments;")
         self.con.commit()
 
-    def registerTournament(name):
+    def addTournament(self,name):
         '''Adds a new Tournament to the Database and sets
         the DB.tournament to the created id'''
         self.tournament = self.c.execute("INSERT INTO tournament (name) \
                         VALUES (%s) RETURNING id",\
                         [name]).fetchone()[0]
         self.con.commit()
+        return self.tournament
 
-
-# #PLAYERS#
-    def deletePlayers():
+    # #PLAYERS#
+    def deletePlayers(self):
         """Remove all the player records from the database."""
         self.c.execute("DELETE FROM players;")
         self.con.commit()
 
-    def countPlayers():
+    def countPlayers(self):
         """Returns the number of players currently registered."""
         return self.c.execute("SELECT count(*) as num FROM players;").fetchall()
 
-    def registerPlayer(name):
+    def addPlayer(self,name):
         """Adds a player to the tournament database.
       
-        The database assigns a unique serial id number for the player.  (This
-        should be handled by your SQL database schema, not in your Python code.)
-      
+        The database assigns a unique serial id number for the player. 
+        A Player added to the database does not include that the player
+        is registered for a tournament.
+        call registerPlayer(playerID,tournamentID) to do so.
+
         Args:
           name: the player's full name (need not be unique).
         """
-        self.c.execute("INSERT INTO players (name) VALUES (%s);",[name])
+        participantID = self.c.execute("INSERT INTO players (name) VALUES (%s) RETURNING id;",
+                        [name]).fetchone([0])
         self.con.commit()
+        return participantID
 
+    def registerPlayer(self,tournamentID,participantID):
+        '''Registeres a Player from the database to a tournament form the 
+        database. 
 
-    def playerStandings():
+        take care that before registering a player to a tournament both must be
+        created in the databse first. 
+        do so by calling:
+        intID DB.addTournament(name)
+        intID DB.addPlayer(name)
+        '''
+        self.c.execute("INSERT INTO registered (tournament,participant) VALUES (%s,%s)",
+            [tournamentID,participantID])
+
+    def playerStandings(self):
         """Returns a list of the players and their win records, sorted by wins.
 
         The first entry in the list should be the player in first place, or a player
@@ -88,13 +104,13 @@ class DB():
         """
         return self.c.execute("SELECT * FROM players ORDER BY wins DESC;").fetchall()
 
-# #MATCHES#
-    def deleteMatches():
+    # #MATCHES#
+    def deleteMatches(self):
         """Remove all the match records from the database."""
         self.c.execute("DELETE FROM matches;")
         self.c.commit()
 
-    def swissPairings():
+    def swissPairings(self):
         """Returns a list of pairs of players for the next round of a match.
       
         Assuming that there are an even number of players registered, each player
@@ -111,8 +127,8 @@ class DB():
         """
 
 
-# #REPORTS#
-    def reportMatch(p1,p2,score_p1,score_p2):
+    # #REPORTS#
+    def reportMatch(self,p1,p2,score_p1,score_p2):
         """Records the outcome of a single match
         between two participants (player or team).
 
@@ -134,7 +150,7 @@ class DB():
         if score_p1 > score_p2:
             winner = p1
             looser = p2
-        else if score_p1 < score_p2:
+        elif score_p1 < score_p2:
             winner = p2
             looser = p1
         else:
@@ -152,9 +168,13 @@ class DB():
                         round = ? AND participant_1=? AND participant_2=?",\
                         update)
 
-    # because of using scores instead of just winner looser and the additional
-    # posibility of a draw this needs to be completly rewritten - see above
-    # def reportMatch(winner, loser,):
-    #     self.c.execute("UPDATE matches SET winner=?,looser=? ")
+        # because of using scores instead of just winner looser and the additional
+        # posibility of a draw this needs to be completly rewritten - see above
+        # def reportMatch(winner, loser,):
+        #     self.c.execute("UPDATE matches SET winner=?,looser=? ")
      
 
+if __name__ == "__main__":
+    db = DB()
+    db.createTables()
+    print db.addTournament('test')
